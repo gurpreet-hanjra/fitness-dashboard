@@ -5,4 +5,4 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"
 database_name = "fitness-dashboard-db"
-database_id = "REPLACE_AFTER_WRANGLER_D1_CREATE"
+database_id = "c1312f80-1bff-4089-82c6-e8fbde850f9d"
