@@ -1,0 +1,25 @@
+{
+  "name": "fitness-dashboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260911.1",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^25.9.1",
+    "better-sqlite3": "^13.0.3",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0",
+    "wrangler": "^4.131.1"
+  }
+}
