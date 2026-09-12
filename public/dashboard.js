@@ -60,8 +60,15 @@ async function loadDashboard() {
   const latestWeightRow = [...rows].reverse().find((r) => r.weight_kg !== null);
   if (latestWeightRow) {
     document.getElementById('weight-current').textContent = `${latestWeightRow.weight_kg} kg`;
+  }
+
+  if (rows.length > 0) {
+    const latestUpdatedAt = rows.reduce(
+      (max, r) => (r.updated_at > max ? r.updated_at : max),
+      rows[0].updated_at
+    );
     document.getElementById('last-updated').textContent =
-      `Last updated: ${new Date(latestWeightRow.updated_at).toLocaleString()}`;
+      `Last updated: ${new Date(latestUpdatedAt).toLocaleString()}`;
   }
 
   if (goal) {
