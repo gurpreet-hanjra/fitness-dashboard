@@ -6,6 +6,7 @@ interface HealthAutoExportPayload {
   data?: {
     metrics?: Array<{
       name?: string;
+      units?: string;
       data?: Array<Record<string, unknown>>;
     }>;
   };
@@ -137,8 +138,12 @@ export function parsePayload(json: unknown): DailyMetricsRow[] {
           break;
         }
         case METRIC.ACTIVE_ENERGY: {
-          const value = numberOrNull(point.qty);
-          if (value !== null) {
+          const raw = numberOrNull(point.qty);
+          if (raw !== null) {
+            // Health Auto Export reports this in kJ when the account's unit
+            // settings are metric; convert to kcal to match this column's
+            // semantics (1 kcal = 4.184 kJ). Already-kcal payloads pass through.
+            const value = metric.units === 'kJ' ? raw / 4.184 : raw;
             acc.activeCaloriesSum += value;
             acc.activeCaloriesSeen = true;
           }

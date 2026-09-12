@@ -148,6 +148,22 @@ describe('parsePayload', () => {
     expect(rows[0].exercise_minutes).toBe(35);
   });
 
+  it('converts active_energy from kJ to kcal when the metric declares kJ units', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'active_energy',
+            units: 'kJ',
+            data: [{ date: '2026-09-01 08:00:00 +0000', qty: 418.4 }],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].active_calories).toBeCloseTo(100, 5);
+  });
+
   it('averages multiple heart_rate points for the same date', () => {
     const payload = {
       data: {
