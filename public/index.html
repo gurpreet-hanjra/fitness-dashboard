@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fitness Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Fitness Dashboard</h1>
+    <p id="last-updated" class="muted"></p>
+
+    <section id="weight-section" class="card highlight">
+      <h2>Weight</h2>
+      <div class="stat-row">
+        <span id="weight-current" class="stat-value">--</span>
+        <span id="weight-goal" class="stat-sub"></span>
+      </div>
+      <canvas id="weight-chart" height="120"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>Steps</h2>
+      <canvas id="steps-chart" height="120"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>Heart Rate</h2>
+      <canvas id="hr-chart" height="120"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>Sleep</h2>
+      <canvas id="sleep-chart" height="120"></canvas>
+    </section>
+  </main>
+
+  <script src="/dashboard.js"></script>
+</body>
+</html>
