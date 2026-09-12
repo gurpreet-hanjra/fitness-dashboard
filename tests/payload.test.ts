@@ -102,4 +102,161 @@ describe('parsePayload', () => {
     expect(rows[0].steps).toBe(8000);
     expect(rows[0].weight_kg).toBe(82.3);
   });
+
+  it('sums multiple step_count points for the same date', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'step_count',
+            data: [
+              { date: '2026-09-01 08:00:00 +0000', qty: 3000 },
+              { date: '2026-09-01 14:00:00 +0000', qty: 5000 },
+            ],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].steps).toBe(8000);
+  });
+
+  it('sums multiple active_energy and apple_exercise_time points for the same date', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'active_energy',
+            data: [
+              { date: '2026-09-01 08:00:00 +0000', qty: 200 },
+              { date: '2026-09-01 14:00:00 +0000', qty: 250 },
+            ],
+          },
+          {
+            name: 'apple_exercise_time',
+            data: [
+              { date: '2026-09-01 08:00:00 +0000', qty: 10 },
+              { date: '2026-09-01 14:00:00 +0000', qty: 25 },
+            ],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].active_calories).toBe(450);
+    expect(rows[0].exercise_minutes).toBe(35);
+  });
+
+  it('averages multiple heart_rate points for the same date', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'heart_rate',
+            data: [
+              { date: '2026-09-01 08:00:00 +0000', Avg: 70 },
+              { date: '2026-09-01 14:00:00 +0000', Avg: 80 },
+            ],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].avg_hr).toBe(75);
+  });
+
+  it('does not let a heart_rate point missing Avg corrupt the running average', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'heart_rate',
+            data: [
+              { date: '2026-09-01 08:00:00 +0000', Avg: 70 },
+              { date: '2026-09-01 14:00:00 +0000', Min: 60, Max: 90 }, // no Avg field
+            ],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].avg_hr).toBe(70);
+  });
+
+  it('uses last-non-null semantics for resting_heart_rate, weight_body_mass, and body_fat_percentage', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'resting_heart_rate',
+            data: [
+              { date: '2026-09-01 08:00:00 +0000', qty: 58 },
+              { date: '2026-09-01 14:00:00 +0000', qty: 60 },
+            ],
+          },
+          {
+            name: 'weight_body_mass',
+            data: [
+              { date: '2026-09-01 08:00:00 +0000', qty: 82.3 },
+              { date: '2026-09-01 14:00:00 +0000' }, // missing qty — should not erase the earlier value
+            ],
+          },
+          {
+            name: 'body_fat_percentage',
+            data: [
+              { date: '2026-09-01 08:00:00 +0000', qty: 22.1 },
+              { date: '2026-09-01 14:00:00 +0000', qty: 21.9 },
+            ],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].resting_hr).toBe(60);
+    expect(rows[0].weight_kg).toBe(82.3);
+    expect(rows[0].body_fat_pct).toBe(21.9);
+  });
+
+  it('sums sleep_analysis stages and asleep hours across multiple points for the same date', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'sleep_analysis',
+            data: [
+              { date: '2026-09-01 00:00:00 +0000', asleep: 4, deep: 0.5, rem: 0.5, core: 2.5, awake: 0.2 },
+              { date: '2026-09-01 04:00:00 +0000', asleep: 3.5, deep: 0.7, rem: 1.0, core: 1.7, awake: 0.4 },
+            ],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].sleep_duration_min).toBe(450); // 7.5 hours
+    expect(JSON.parse(rows[0].sleep_stages_json as string)).toEqual({ deep: 72, rem: 90, core: 252, awake: 36 });
+  });
+
+  it('sets sleep_stages_json to null when all stage values are null', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'sleep_analysis',
+            data: [{ date: '2026-09-01 00:00:00 +0000', asleep: 7.5 }],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].sleep_duration_min).toBe(450);
+    expect(rows[0].sleep_stages_json).toBeNull();
+  });
+
+  it('throws PayloadError for a non-date-shaped string', () => {
+    const payload = {
+      data: { metrics: [{ name: 'step_count', data: [{ date: 'not a date at all', qty: 100 }] }] },
+    };
+    expect(() => parsePayload(payload)).toThrow(PayloadError);
+  });
 });
