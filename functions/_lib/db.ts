@@ -18,24 +18,33 @@ const UPSERT_SQL = `
     updated_at = excluded.updated_at
 `;
 
+const BATCH_CHUNK_SIZE = 50;
+
 export async function upsertDailyMetrics(db: D1Like, rows: DailyMetricsRow[]): Promise<void> {
-  for (const row of rows) {
-    await db
-      .prepare(UPSERT_SQL)
-      .bind(
-        row.date,
-        row.steps,
-        row.active_calories,
-        row.exercise_minutes,
-        row.resting_hr,
-        row.avg_hr,
-        row.sleep_duration_min,
-        row.sleep_stages_json,
-        row.weight_kg,
-        row.body_fat_pct,
-        row.updated_at
-      )
-      .run();
+  if (!db.batch) {
+    throw new Error('D1Like implementation does not support batch()');
+  }
+  const batch = db.batch.bind(db);
+
+  const statements = rows.map((row) =>
+    db.prepare(UPSERT_SQL).bind(
+      row.date,
+      row.steps,
+      row.active_calories,
+      row.exercise_minutes,
+      row.resting_hr,
+      row.avg_hr,
+      row.sleep_duration_min,
+      row.sleep_stages_json,
+      row.weight_kg,
+      row.body_fat_pct,
+      row.updated_at
+    )
+  );
+
+  for (let i = 0; i < statements.length; i += BATCH_CHUNK_SIZE) {
+    const chunk = statements.slice(i, i + BATCH_CHUNK_SIZE);
+    await batch(chunk);
   }
 }
 

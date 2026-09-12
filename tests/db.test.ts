@@ -59,6 +59,24 @@ describe('daily_metrics upsert/query', () => {
     const rows = await queryMetricsRange(db, '2020-01-01', '2020-01-31');
     expect(rows).toEqual([]);
   });
+
+  it('persists a batch larger than the internal chunk size (multi-chunk path)', async () => {
+    const rowCount = 62;
+    const rows: DailyMetricsRow[] = Array.from({ length: rowCount }, (_, i) => {
+      const day = String((i % 28) + 1).padStart(2, '0');
+      const month = i < 28 ? '08' : i < 56 ? '09' : '10';
+      return { ...emptyRow(`2026-${month}-${day}`), steps: 1000 + i };
+    });
+
+    await upsertDailyMetrics(db, rows);
+
+    const stored = await queryMetricsRange(db, '2026-08-01', '2026-10-31');
+    expect(stored).toHaveLength(rowCount);
+    const byDate = new Map(stored.map((r) => [r.date, r]));
+    for (const row of rows) {
+      expect(byDate.get(row.date)?.steps).toBe(row.steps);
+    }
+  });
 });
 
 describe('goals', () => {

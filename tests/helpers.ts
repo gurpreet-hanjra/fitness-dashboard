@@ -29,8 +29,22 @@ export function createTestDb(): D1Like {
         async all<T>() {
           return { results: stmt.all(...boundArgs) as T[] };
         },
-      };
+        // Retained so batch() can re-run this exact bound statement inside a transaction.
+        _sql: sql,
+        _boundArgs: () => boundArgs,
+      } as D1PreparedLike & { _sql: string; _boundArgs: () => unknown[] };
       return prepared;
+    },
+    async batch(statements: D1PreparedLike[]): Promise<unknown[]> {
+      const runAll = sqlite.transaction((stmts: D1PreparedLike[]) => {
+        const results: unknown[] = [];
+        for (const stmt of stmts) {
+          const { _sql, _boundArgs } = stmt as D1PreparedLike & { _sql: string; _boundArgs: () => unknown[] };
+          results.push(sqlite.prepare(_sql).run(..._boundArgs()));
+        }
+        return results;
+      });
+      return runAll(statements);
     },
   };
 }

@@ -27,6 +27,7 @@ export interface D1PreparedLike {
 
 export interface D1Like {
   prepare(sql: string): D1PreparedLike;
+  batch?(statements: D1PreparedLike[]): Promise<unknown[]>;
 }
 
 export interface Env {
