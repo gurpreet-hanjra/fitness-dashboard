@@ -56,6 +56,7 @@ async function loadDashboard() {
     'Sleep (hrs)',
     '#0891b2'
   );
+  lineChart('body-fat-chart', labels, rows.map((r) => r.body_fat_pct), 'Body Fat %', '#d97706');
 
   const latestWeightRow = [...rows].reverse().find((r) => r.weight_kg !== null);
   if (latestWeightRow) {
