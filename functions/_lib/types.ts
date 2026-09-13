@@ -33,4 +33,50 @@ export interface D1Like {
 export interface Env {
   DB: D1Like;
   INGEST_SECRET: string;
+  ANTHROPIC_API_KEY: string;
+}
+
+export interface HrZones {
+  light_sec: number | null;
+  intensive_sec: number | null;
+  aerobic_sec: number | null;
+  anaerobic_sec: number | null;
+  vo2max_sec: number | null;
+}
+
+export interface ExtractedWorkout {
+  started_at?: string;
+  sport?: string;
+  duration_sec?: number | null;
+  active_kcal?: number | null;
+  total_kcal?: number | null;
+  avg_hr?: number | null;
+  max_hr?: number | null;
+  hr_zones?: HrZones | null;
+  training_effect_aerobic?: number | null;
+  training_effect_anaerobic?: number | null;
+  training_load?: number | null;
+  training_load_label?: string | null;
+  recovery_hours?: number | null;
+  vitality_score?: number | null;
+  source_device?: string | null;
+}
+
+export interface WorkoutRow {
+  started_at: string;
+  sport: string;
+  duration_sec: number | null;
+  active_kcal: number | null;
+  total_kcal: number | null;
+  avg_hr: number | null;
+  max_hr: number | null;
+  hr_zones_json: string | null;
+  training_effect_aerobic: number | null;
+  training_effect_anaerobic: number | null;
+  training_load: number | null;
+  training_load_label: string | null;
+  recovery_hours: number | null;
+  vitality_score: number | null;
+  source_device: string | null;
+  created_at: string;
 }

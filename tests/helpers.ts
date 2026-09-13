@@ -50,7 +50,7 @@ export function createTestDb(): D1Like {
 }
 
 export function makeEnv(db: D1Like, secret = 'test-secret'): Env {
-  return { DB: db, INGEST_SECRET: secret };
+  return { DB: db, INGEST_SECRET: secret, ANTHROPIC_API_KEY: 'test-anthropic-key' };
 }
 
 export function makeRequest(url: string, init?: RequestInit): Request {
