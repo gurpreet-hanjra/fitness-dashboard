@@ -69,6 +69,9 @@ interface Accumulator {
 
   sleepAwakeSum: number;
   sleepAwakeSeen: boolean;
+
+  sleepInBedHoursSum: number;
+  sleepInBedSeen: boolean;
 }
 
 function newAccumulator(date: string, updatedAt: string): Accumulator {
@@ -99,6 +102,8 @@ function newAccumulator(date: string, updatedAt: string): Accumulator {
     sleepCoreSeen: false,
     sleepAwakeSum: 0,
     sleepAwakeSeen: false,
+    sleepInBedHoursSum: 0,
+    sleepInBedSeen: false,
   };
 }
 
@@ -215,6 +220,11 @@ export function parsePayload(json: unknown): DailyMetricsRow[] {
             acc.sleepAwakeSum += awake;
             acc.sleepAwakeSeen = true;
           }
+          const inBed = numberOrNull(point.inBed);
+          if (inBed !== null) {
+            acc.sleepInBedHoursSum += inBed;
+            acc.sleepInBedSeen = true;
+          }
           break;
         }
         default:
@@ -233,6 +243,19 @@ function accumulatorToRow(acc: Accumulator): DailyMetricsRow {
   const awake = acc.sleepAwakeSeen ? Math.round(acc.sleepAwakeSum * 60) : null;
   const allStagesNull = deep === null && rem === null && core === null && awake === null;
 
+  // Some sources (observed: Mi Fitness syncing into Apple Health) report
+  // inBed accurately but leave asleep/stage fields at 0 rather than omitting
+  // them — fall back to inBed as a "time in bed" proxy so the dashboard
+  // shows something meaningful instead of a flat 0.
+  const sleepDurationMin =
+    acc.sleepAsleepSeen && acc.sleepAsleepHoursSum > 0
+      ? Math.round(acc.sleepAsleepHoursSum * 60)
+      : acc.sleepInBedSeen && acc.sleepInBedHoursSum > 0
+        ? Math.round(acc.sleepInBedHoursSum * 60)
+        : acc.sleepAsleepSeen
+          ? 0
+          : null;
+
   return {
     date: acc.date,
     steps: acc.stepsSeen ? acc.stepsSum : null,
@@ -240,7 +263,7 @@ function accumulatorToRow(acc: Accumulator): DailyMetricsRow {
     exercise_minutes: acc.exerciseMinutesSeen ? acc.exerciseMinutesSum : null,
     resting_hr: acc.restingHrSeen ? acc.restingHrLast : null,
     avg_hr: acc.hrCount > 0 ? acc.hrSum / acc.hrCount : null,
-    sleep_duration_min: acc.sleepAsleepSeen ? Math.round(acc.sleepAsleepHoursSum * 60) : null,
+    sleep_duration_min: sleepDurationMin,
     sleep_stages_json: allStagesNull ? null : JSON.stringify({ deep, rem, core, awake }),
     weight_kg: acc.weightSeen ? acc.weightLast : null,
     body_fat_pct: acc.bodyFatSeen ? acc.bodyFatLast : null,

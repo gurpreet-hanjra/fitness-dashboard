@@ -269,6 +269,46 @@ describe('parsePayload', () => {
     expect(rows[0].sleep_stages_json).toBeNull();
   });
 
+  it('falls back to inBed when asleep is 0 (observed Mi Fitness behavior: real inBed, zeroed stages)', () => {
+    const payload = {
+      data: {
+        metrics: [
+          {
+            name: 'sleep_analysis',
+            data: [
+              {
+                date: '2026-09-13 00:00:00 +0200',
+                asleep: 0,
+                inBed: 3.2,
+                core: 0,
+                deep: 0,
+                rem: 0,
+                awake: 0,
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].sleep_duration_min).toBe(192); // 3.2 hours, from inBed
+    // Stages were explicitly reported as 0 (not omitted), so they're stored as
+    // zero, not null — the inBed fallback only affects sleep_duration_min.
+    expect(JSON.parse(rows[0].sleep_stages_json as string)).toEqual({ deep: 0, rem: 0, core: 0, awake: 0 });
+  });
+
+  it('keeps sleep_duration_min at 0 when asleep is 0 and inBed is absent', () => {
+    const payload = {
+      data: {
+        metrics: [
+          { name: 'sleep_analysis', data: [{ date: '2026-09-01 00:00:00 +0000', asleep: 0 }] },
+        ],
+      },
+    };
+    const rows = parsePayload(payload);
+    expect(rows[0].sleep_duration_min).toBe(0);
+  });
+
   it('throws PayloadError for a non-date-shaped string', () => {
     const payload = {
       data: { metrics: [{ name: 'step_count', data: [{ date: 'not a date at all', qty: 100 }] }] },
