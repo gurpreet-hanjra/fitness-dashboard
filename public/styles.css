@@ -65,3 +65,27 @@ h1 { font-size: 1.5rem; margin-bottom: 4px; }
   .card.highlight { grid-column: 1 / -1; }
   h1, .muted, .error { grid-column: 1 / -1; }
 }
+
+.workout-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.workout-item:last-child {
+  border-bottom: none;
+}
+
+.workout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.workout-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}

@@ -25,6 +25,46 @@ function lineChart(canvasId, labels, data, label, color) {
   });
 }
 
+function formatWorkoutDuration(sec) {
+  if (sec === null || sec === undefined) return '--';
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function renderWorkouts(workouts) {
+  const container = document.getElementById('workouts-list');
+  if (workouts.length === 0) {
+    container.innerHTML = '<p class="muted">No workouts logged yet.</p>';
+    return;
+  }
+  container.innerHTML = workouts
+    .map((w) => {
+      const date = new Date(w.started_at).toLocaleDateString();
+      const load =
+        w.training_load !== null
+          ? `${w.training_load}${w.training_load_label ? ` (${w.training_load_label})` : ''}`
+          : '--';
+      const recovery = w.recovery_hours !== null ? `${w.recovery_hours}h` : '--';
+      return `
+        <div class="workout-item">
+          <div class="workout-header">
+            <strong>${w.sport}</strong>
+            <span class="muted">${date}</span>
+          </div>
+          <div class="workout-stats">
+            <span>${formatWorkoutDuration(w.duration_sec)}</span>
+            <span>${w.active_kcal ?? '--'} kcal</span>
+            <span>HR ${w.avg_hr ?? '--'}/${w.max_hr ?? '--'}</span>
+            <span>Load: ${load}</span>
+            <span>Recovery: ${recovery}</span>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
 async function loadDashboard() {
   const to = new Date();
   const from = new Date();
@@ -32,10 +72,12 @@ async function loadDashboard() {
 
   let rows = [];
   let goal = null;
+  let workouts = [];
   try {
-    [rows, goal] = await Promise.all([
+    [rows, goal, workouts] = await Promise.all([
       fetchJson(`/api/metrics?from=${formatDate(from)}&to=${formatDate(to)}`),
       fetchJson('/api/goals?metric=weight_kg'),
+      fetchJson(`/api/workouts?from=${formatDate(from)}&to=${formatDate(to)}`),
     ]);
   } catch (err) {
     document.querySelector('main').insertAdjacentHTML(
@@ -57,6 +99,8 @@ async function loadDashboard() {
     '#0891b2'
   );
   lineChart('body-fat-chart', labels, rows.map((r) => r.body_fat_pct), 'Body Fat %', '#d97706');
+
+  renderWorkouts(workouts);
 
   const latestWeightRow = [...rows].reverse().find((r) => r.weight_kg !== null);
   if (latestWeightRow) {
