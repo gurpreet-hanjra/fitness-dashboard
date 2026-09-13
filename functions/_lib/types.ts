@@ -33,7 +33,7 @@ export interface D1Like {
 export interface Env {
   DB: D1Like;
   INGEST_SECRET: string;
-  ANTHROPIC_API_KEY: string;
+  AI: Ai;
 }
 
 export interface HrZones {

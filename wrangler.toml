@@ -6,3 +6,6 @@ pages_build_output_dir = "public"
 binding = "DB"
 database_name = "fitness-dashboard-db"
 database_id = "c1312f80-1bff-4089-82c6-e8fbde850f9d"
+
+[ai]
+binding = "AI"

@@ -21,7 +21,7 @@ export function createIngestHandler(extract: VisionExtractor): PagesFunction<Env
 
     let extracted;
     try {
-      extracted = await extract(imageBytes, contentType, env.ANTHROPIC_API_KEY);
+      extracted = await extract(imageBytes, contentType, env.AI);
     } catch {
       return new Response('Vision extraction failed', { status: 422 });
     }
