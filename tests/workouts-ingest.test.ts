@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createIngestHandler } from '../functions/api/workouts/ingest';
-import { createTestDb, makeEnv, makeRequest } from './helpers';
-import type { D1Like, ExtractedWorkout } from '../functions/_lib/types';
+import { createTestDb, makeEnv, makeRequest, createTestR2 } from './helpers';
+import type { D1Like, ExtractedWorkout, Env, R2Like } from '../functions/_lib/types';
 import type { VisionExtractor } from '../functions/_lib/vision';
 
 const FULL_EXTRACTION: ExtractedWorkout = {
@@ -145,5 +145,53 @@ describe('POST /api/workouts/ingest', () => {
     const { results } = await db.prepare('SELECT * FROM workouts').bind().all<{ training_load: number }>();
     expect(results).toHaveLength(1);
     expect(results[0].training_load).toBe(300);
+  });
+
+  it('uploads the source image to R2 and stores the image_key', async () => {
+    const r2 = createTestR2();
+    const env: Env = { ...makeEnv(db), WORKOUT_IMAGES: r2 };
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+    const request = makeRequest('https://x/api/workouts/ingest', {
+      method: 'POST',
+      headers: { 'X-Ingest-Secret': 'test-secret' },
+      body: new Uint8Array([1, 2, 3]),
+    });
+    const response = await handler({ request, env } as any);
+    const body = (await response.json()) as { image_key: string | null };
+    expect(body.image_key).toBe('2026-08-17T20-03-14.jpg');
+
+    const stored = await r2.get('2026-08-17T20-03-14.jpg');
+    expect(stored).not.toBeNull();
+    const storedBytes = new Uint8Array(await stored!.arrayBuffer());
+    expect(Array.from(storedBytes)).toEqual([1, 2, 3]);
+
+    const row = await db
+      .prepare('SELECT * FROM workouts WHERE started_at = ?')
+      .bind('2026-08-17T20:03:14')
+      .first<{ image_key: string }>();
+    expect(row?.image_key).toBe('2026-08-17T20-03-14.jpg');
+  });
+
+  it('still ingests successfully with image_key null when the R2 upload fails', async () => {
+    const throwingR2: R2Like = {
+      async put() {
+        throw new Error('R2 boom');
+      },
+      async get() {
+        return null;
+      },
+    };
+    const env: Env = { ...makeEnv(db), WORKOUT_IMAGES: throwingR2 };
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+    const request = makeRequest('https://x/api/workouts/ingest', {
+      method: 'POST',
+      headers: { 'X-Ingest-Secret': 'test-secret' },
+      body: new Uint8Array([1, 2, 3]),
+    });
+    const response = await handler({ request, env } as any);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { image_key: string | null; training_load: number };
+    expect(body.image_key).toBeNull();
+    expect(body.training_load).toBe(286);
   });
 });

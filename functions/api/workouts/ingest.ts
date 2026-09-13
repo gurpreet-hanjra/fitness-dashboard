@@ -3,6 +3,7 @@ import { isAuthorized } from '../../_lib/auth';
 import { callVisionExtraction, type VisionExtractor } from '../../_lib/vision';
 import { normalizeExtractedWorkout } from '../../_lib/workout-parse';
 import { upsertWorkout } from '../../_lib/workouts-db';
+import { imageKeyForStartedAt } from '../../_lib/image-store';
 
 export function createIngestHandler(extract: VisionExtractor): PagesFunction<Env> {
   return async (context) => {
@@ -29,6 +30,17 @@ export function createIngestHandler(extract: VisionExtractor): PagesFunction<Env
     const row = normalizeExtractedWorkout(extracted, new Date().toISOString());
     if (!row) {
       return new Response('Could not extract required fields (started_at, sport) from image', { status: 422 });
+    }
+
+    // Saving the source image is best-effort: a failed upload should not
+    // fail the whole ingest, since the extracted data is still valid and
+    // useful without it.
+    try {
+      const key = imageKeyForStartedAt(row.started_at);
+      await env.WORKOUT_IMAGES.put(key, imageBytes, { httpMetadata: { contentType } });
+      row.image_key = key;
+    } catch {
+      row.image_key = null;
     }
 
     await upsertWorkout(env.DB, row);
