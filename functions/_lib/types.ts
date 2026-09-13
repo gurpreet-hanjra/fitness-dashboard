@@ -30,10 +30,25 @@ export interface D1Like {
   batch?(statements: D1PreparedLike[]): Promise<unknown[]>;
 }
 
+export interface R2ObjectBodyLike {
+  arrayBuffer(): Promise<ArrayBuffer>;
+  httpMetadata?: { contentType?: string };
+}
+
+export interface R2Like {
+  put(
+    key: string,
+    value: ArrayBuffer,
+    options?: { httpMetadata?: { contentType?: string } }
+  ): Promise<unknown>;
+  get(key: string): Promise<R2ObjectBodyLike | null>;
+}
+
 export interface Env {
   DB: D1Like;
   INGEST_SECRET: string;
   AI: Ai;
+  WORKOUT_IMAGES: R2Like;
 }
 
 export interface HrZones {
@@ -78,5 +93,6 @@ export interface WorkoutRow {
   recovery_hours: number | null;
   vitality_score: number | null;
   source_device: string | null;
+  image_key: string | null;
   created_at: string;
 }

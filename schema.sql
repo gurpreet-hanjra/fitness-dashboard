@@ -35,5 +35,6 @@ CREATE TABLE IF NOT EXISTS workouts (
   recovery_hours               INTEGER,
   vitality_score                INTEGER,
   source_device                 TEXT,
+  image_key                     TEXT,
   created_at                    TEXT NOT NULL
 );

@@ -5,8 +5,8 @@ const UPSERT_SQL = `
     started_at, sport, duration_sec, active_kcal, total_kcal, avg_hr, max_hr,
     hr_zones_json, training_effect_aerobic, training_effect_anaerobic,
     training_load, training_load_label, recovery_hours, vitality_score,
-    source_device, created_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    source_device, image_key, created_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(started_at) DO UPDATE SET
     sport = excluded.sport,
     duration_sec = excluded.duration_sec,
@@ -22,6 +22,7 @@ const UPSERT_SQL = `
     recovery_hours = excluded.recovery_hours,
     vitality_score = excluded.vitality_score,
     source_device = excluded.source_device,
+    image_key = excluded.image_key,
     created_at = excluded.created_at
 `;
 
@@ -44,6 +45,7 @@ export async function upsertWorkout(db: D1Like, row: WorkoutRow): Promise<void> 
       row.recovery_hours,
       row.vitality_score,
       row.source_device,
+      row.image_key,
       row.created_at
     )
     .run();

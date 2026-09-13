@@ -83,6 +83,7 @@ describe('normalizeExtractedWorkout', () => {
       recovery_hours: null,
       vitality_score: null,
       source_device: null,
+      image_key: null,
       created_at: '2026-08-17T22:00:00.000Z',
     });
   });

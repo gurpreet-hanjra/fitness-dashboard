@@ -26,6 +26,7 @@ function row(overrides: Partial<WorkoutRow> = {}): WorkoutRow {
     recovery_hours: 72,
     vitality_score: 64,
     source_device: 'Xiaomi Smart Band 10',
+    image_key: '2026-08-17T20-03-14.jpg',
     created_at: '2026-08-17T22:00:00.000Z',
     ...overrides,
   };
@@ -53,6 +54,16 @@ describe('workouts upsert/query', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].training_load).toBe(300);
     expect(rows[0].training_load_label).toBe('Extreme');
+  });
+
+  it('stores and updates image_key, including clearing it back to null on re-upsert', async () => {
+    await upsertWorkout(db, row({ image_key: '2026-08-17T20-03-14.jpg' }));
+    let rows = await queryWorkoutsRange(db, '2026-08-01', '2026-08-31');
+    expect(rows[0].image_key).toBe('2026-08-17T20-03-14.jpg');
+
+    await upsertWorkout(db, row({ image_key: null }));
+    rows = await queryWorkoutsRange(db, '2026-08-01', '2026-08-31');
+    expect(rows[0].image_key).toBeNull();
   });
 
   it('filters by the date portion of started_at', async () => {

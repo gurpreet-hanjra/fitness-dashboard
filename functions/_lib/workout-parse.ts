@@ -21,6 +21,9 @@ export function normalizeExtractedWorkout(extracted: ExtractedWorkout, nowIso: s
     recovery_hours: numberOrNull(extracted.recovery_hours),
     vitality_score: numberOrNull(extracted.vitality_score),
     source_device: stringOrNull(extracted.source_device),
+    // Not part of AI extraction -- set by the ingest handler after a
+    // successful R2 upload of the source image (functions/_lib/image-store.ts).
+    image_key: null,
     created_at: nowIso,
   };
 }

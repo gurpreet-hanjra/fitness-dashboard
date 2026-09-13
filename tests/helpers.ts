@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { D1Like, D1PreparedLike, Env } from '../functions/_lib/types';
+import type { D1Like, D1PreparedLike, Env, R2Like } from '../functions/_lib/types';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -49,11 +49,31 @@ export function createTestDb(): D1Like {
   };
 }
 
+export function createTestR2(): R2Like {
+  const store = new Map<string, { bytes: ArrayBuffer; contentType?: string }>();
+  return {
+    async put(key, value, options) {
+      store.set(key, { bytes: value, contentType: options?.httpMetadata?.contentType });
+      return undefined;
+    },
+    async get(key) {
+      const entry = store.get(key);
+      if (!entry) return null;
+      return {
+        async arrayBuffer() {
+          return entry.bytes;
+        },
+        httpMetadata: entry.contentType ? { contentType: entry.contentType } : undefined,
+      };
+    },
+  };
+}
+
 export function makeEnv(db: D1Like, secret = 'test-secret'): Env {
   // Tests exercise the ingest handler via an injected fake VisionExtractor
   // (see workouts-ingest.test.ts), so env.AI is never actually called —
   // this stub only needs to satisfy the Env type.
-  return { DB: db, INGEST_SECRET: secret, AI: {} as unknown as Env['AI'] };
+  return { DB: db, INGEST_SECRET: secret, AI: {} as unknown as Env['AI'], WORKOUT_IMAGES: createTestR2() };
 }
 
 export function makeRequest(url: string, init?: RequestInit): Request {
