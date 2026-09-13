@@ -89,3 +89,23 @@ h1 { font-size: 1.5rem; margin-bottom: 4px; }
   font-size: 0.9rem;
   color: var(--muted);
 }
+
+.workout-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workout-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.workout-thumb {
+  height: 60px;
+  width: 60px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 6px;
+  flex-shrink: 0;
+}

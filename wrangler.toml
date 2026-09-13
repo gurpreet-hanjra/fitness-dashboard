@@ -9,3 +9,7 @@ database_id = "c1312f80-1bff-4089-82c6-e8fbde850f9d"
 
 [ai]
 binding = "AI"
+
+[[r2_buckets]]
+binding = "WORKOUT_IMAGES"
+bucket_name = "fitness-dashboard-workout-images"

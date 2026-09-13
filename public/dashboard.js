@@ -46,18 +46,29 @@ function renderWorkouts(workouts) {
           ? `${w.training_load}${w.training_load_label ? ` (${w.training_load_label})` : ''}`
           : '--';
       const recovery = w.recovery_hours !== null ? `${w.recovery_hours}h` : '--';
+      const imageUrl = `/api/workouts/image?started_at=${encodeURIComponent(w.started_at)}`;
+      const thumb = w.image_key
+        ? `<a href="${imageUrl}" target="_blank" rel="noopener">
+             <img class="workout-thumb" src="${imageUrl}" alt="${w.sport} workout card" />
+           </a>`
+        : '';
       return `
         <div class="workout-item">
-          <div class="workout-header">
-            <strong>${w.sport}</strong>
-            <span class="muted">${date}</span>
-          </div>
-          <div class="workout-stats">
-            <span>${formatWorkoutDuration(w.duration_sec)}</span>
-            <span>${w.active_kcal ?? '--'} kcal</span>
-            <span>HR ${w.avg_hr ?? '--'}/${w.max_hr ?? '--'}</span>
-            <span>Load: ${load}</span>
-            <span>Recovery: ${recovery}</span>
+          <div class="workout-row">
+            ${thumb}
+            <div class="workout-content">
+              <div class="workout-header">
+                <strong>${w.sport}</strong>
+                <span class="muted">${date}</span>
+              </div>
+              <div class="workout-stats">
+                <span>${formatWorkoutDuration(w.duration_sec)}</span>
+                <span>${w.active_kcal ?? '--'} kcal</span>
+                <span>HR ${w.avg_hr ?? '--'}/${w.max_hr ?? '--'}</span>
+                <span>Load: ${load}</span>
+                <span>Recovery: ${recovery}</span>
+              </div>
+            </div>
           </div>
         </div>
       `;
