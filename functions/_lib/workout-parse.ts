@@ -24,6 +24,8 @@ export function normalizeExtractedWorkout(extracted: ExtractedWorkout, nowIso: s
     // Not part of AI extraction -- set by the ingest handler after a
     // successful R2 upload of the source image (functions/_lib/image-store.ts).
     image_key: null,
+    // Not part of initial extraction -- set later by the advice endpoint (Tasks 2-4).
+    advice: null,
     created_at: nowIso,
   };
 }

@@ -94,5 +94,12 @@ export interface WorkoutRow {
   vitality_score: number | null;
   source_device: string | null;
   image_key: string | null;
+  advice: string | null;
   created_at: string;
+}
+
+export interface AdviceContext {
+  workout: WorkoutRow;
+  recentMetrics: DailyMetricsRow[];
+  recentWorkouts: WorkoutRow[];
 }

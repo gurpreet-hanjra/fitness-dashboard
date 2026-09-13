@@ -22,6 +22,7 @@ function row(startedAt: string): WorkoutRow {
     vitality_score: 64,
     source_device: 'Xiaomi Smart Band 10',
     image_key: null,
+    advice: null,
     created_at: '2026-08-17T22:00:00.000Z',
   };
 }
