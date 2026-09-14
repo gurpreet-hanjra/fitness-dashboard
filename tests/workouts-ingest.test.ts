@@ -49,6 +49,13 @@ function throwingAdvisor(): AdviceGenerator {
   };
 }
 
+function slowThrowingAdvisor(): AdviceGenerator {
+  return async () => {
+    await new Promise((r) => setTimeout(r, 10));
+    throw new Error('slow failure');
+  };
+}
+
 const DEFAULT_ADVICE = 'Great session -- prioritize hydration and protein tonight, and rest tomorrow.';
 
 describe('POST /api/workouts/ingest', () => {
@@ -230,6 +237,26 @@ describe('POST /api/workouts/ingest', () => {
       .prepare('SELECT * FROM workouts WHERE started_at = ?')
       .bind('2026-08-17T20:03:14')
       .first<{ advice: string | null }>();
+    expect(row?.advice).toBeNull();
+  });
+
+  it('persists the workout even if advice generation is slow before failing', async () => {
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), slowThrowingAdvisor());
+    const request = makeRequest('https://x/api/workouts/ingest', {
+      method: 'POST',
+      headers: { 'X-Ingest-Secret': 'test-secret' },
+      body: new Uint8Array([1, 2, 3]),
+    });
+    const response = await handler({ request, env: makeEnv(db) } as any);
+    expect(response.status).toBe(200);
+
+    const row = await db
+      .prepare('SELECT * FROM workouts WHERE started_at = ?')
+      .bind('2026-08-17T20:03:14')
+      .first<{ training_load: number; sport: string; advice: string | null }>();
+    expect(row).not.toBeNull();
+    expect(row?.training_load).toBe(286);
+    expect(row?.sport).toBe('Hockey');
     expect(row?.advice).toBeNull();
   });
 

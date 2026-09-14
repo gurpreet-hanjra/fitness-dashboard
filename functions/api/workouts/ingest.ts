@@ -45,6 +45,14 @@ export function createIngestHandler(extract: VisionExtractor, advise: AdviceGene
       row.image_key = null;
     }
 
+    // Durably persist the extracted workout (and image_key) BEFORE attempting
+    // advice generation. Advice generation calls out to Workers AI and can be
+    // slow or stall; if it does, we don't want to risk losing the whole
+    // workout record along with it. This upsert is safe to repeat below since
+    // started_at is the upsert's conflict key.
+    row.advice = null;
+    await upsertWorkout(env.DB, row);
+
     // Advice generation is also best-effort: a failure (context build or
     // the AI call itself) should not fail the whole ingest.
     try {
