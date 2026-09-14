@@ -62,7 +62,7 @@ h1 { font-size: 1.5rem; margin-bottom: 4px; }
     grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
-  .card.highlight { grid-column: 1 / -1; }
+  .card.highlight, .card.full-width { grid-column: 1 / -1; }
   h1, .muted, .error { grid-column: 1 / -1; }
 }
 
