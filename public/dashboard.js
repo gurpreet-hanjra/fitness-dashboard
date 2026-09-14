@@ -39,7 +39,7 @@ function renderWorkouts(workouts) {
     return;
   }
   container.innerHTML = workouts
-    .map((w) => {
+    .map((w, index) => {
       const date = new Date(w.started_at).toLocaleDateString();
       const load =
         w.training_load !== null
@@ -51,6 +51,11 @@ function renderWorkouts(workouts) {
         ? `<a href="${imageUrl}" target="_blank" rel="noopener">
              <img class="workout-thumb" src="${imageUrl}" alt="${w.sport} workout card" />
            </a>`
+        : '';
+      const adviceId = `workout-advice-${index}`;
+      const adviceToggle = w.advice
+        ? `<button class="advice-toggle" data-target="${adviceId}">View advice</button>
+           <div class="advice-text" id="${adviceId}" hidden>${w.advice}</div>`
         : '';
       return `
         <div class="workout-item">
@@ -68,12 +73,22 @@ function renderWorkouts(workouts) {
                 <span>Load: ${load}</span>
                 <span>Recovery: ${recovery}</span>
               </div>
+              ${adviceToggle}
             </div>
           </div>
         </div>
       `;
     })
     .join('');
+
+  container.querySelectorAll('.advice-toggle').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = document.getElementById(button.dataset.target);
+      const isHidden = target.hidden;
+      target.hidden = !isHidden;
+      button.textContent = isHidden ? 'Hide advice' : 'View advice';
+    });
+  });
 }
 
 async function loadDashboard() {
