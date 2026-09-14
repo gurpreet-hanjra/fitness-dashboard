@@ -54,10 +54,21 @@ describe('buildAdviceContext', () => {
     expect(dates).not.toContain('2026-07-01');
   });
 
+  it('includes daily_metrics at the 14-day boundary (13 days back inclusive, 14 days back exclusive)', async () => {
+    await insertDailyMetric(db, '2026-08-04', 8000); // 13 days before 2026-08-17, should be included
+    await insertDailyMetric(db, '2026-08-03', 5000); // 14 days before 2026-08-17, should be excluded
+
+    const context = await buildAdviceContext(db, workoutRow({ started_at: '2026-08-17T20:03:14' }));
+    const dates = context.recentMetrics.map((m) => m.date);
+    expect(dates).toContain('2026-08-04');
+    expect(dates).not.toContain('2026-08-03');
+  });
+
   it('includes prior workouts within the window but excludes the workout itself', async () => {
     await upsertWorkout(db, workoutRow({ started_at: '2026-08-10T18:00:00', training_load: 200 }));
 
     const workout = workoutRow({ started_at: '2026-08-17T20:03:14', training_load: 286 });
+    await upsertWorkout(db, workout);
     const context = await buildAdviceContext(db, workout);
 
     expect(context.recentWorkouts).toHaveLength(1);
