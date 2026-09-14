@@ -3,6 +3,7 @@ import { createIngestHandler } from '../functions/api/workouts/ingest';
 import { createTestDb, makeEnv, makeRequest, createTestR2 } from './helpers';
 import type { D1Like, ExtractedWorkout, Env, R2Like } from '../functions/_lib/types';
 import type { VisionExtractor } from '../functions/_lib/vision';
+import type { AdviceGenerator } from '../functions/_lib/advice';
 
 const FULL_EXTRACTION: ExtractedWorkout = {
   started_at: '2026-08-17T20:03:14',
@@ -38,6 +39,18 @@ function throwingExtractor(): VisionExtractor {
   };
 }
 
+function fakeAdvisor(text: string): AdviceGenerator {
+  return async () => text;
+}
+
+function throwingAdvisor(): AdviceGenerator {
+  return async () => {
+    throw new Error('advice boom');
+  };
+}
+
+const DEFAULT_ADVICE = 'Great session -- prioritize hydration and protein tonight, and rest tomorrow.';
+
 describe('POST /api/workouts/ingest', () => {
   let db: D1Like;
 
@@ -46,7 +59,7 @@ describe('POST /api/workouts/ingest', () => {
   });
 
   it('rejects requests without the secret header', async () => {
-    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), fakeAdvisor(DEFAULT_ADVICE));
     const request = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       body: new Uint8Array([1, 2, 3]),
@@ -56,7 +69,7 @@ describe('POST /api/workouts/ingest', () => {
   });
 
   it('rejects requests with the wrong secret', async () => {
-    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), fakeAdvisor(DEFAULT_ADVICE));
     const request = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'wrong' },
@@ -67,7 +80,7 @@ describe('POST /api/workouts/ingest', () => {
   });
 
   it('rejects an empty body', async () => {
-    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), fakeAdvisor(DEFAULT_ADVICE));
     const request = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'test-secret' },
@@ -78,7 +91,7 @@ describe('POST /api/workouts/ingest', () => {
   });
 
   it('returns 422 and writes nothing when extraction throws', async () => {
-    const handler = createIngestHandler(throwingExtractor());
+    const handler = createIngestHandler(throwingExtractor(), fakeAdvisor(DEFAULT_ADVICE));
     const request = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'test-secret' },
@@ -92,7 +105,7 @@ describe('POST /api/workouts/ingest', () => {
   });
 
   it('returns 422 and writes nothing when extraction is missing required fields', async () => {
-    const handler = createIngestHandler(fakeExtractor({ sport: 'Hockey' })); // no started_at
+    const handler = createIngestHandler(fakeExtractor({ sport: 'Hockey' }), fakeAdvisor(DEFAULT_ADVICE)); // no started_at
     const request = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'test-secret' },
@@ -105,8 +118,8 @@ describe('POST /api/workouts/ingest', () => {
     expect(results).toEqual([]);
   });
 
-  it('ingests a valid extraction and stores it', async () => {
-    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+  it('ingests a valid extraction and stores it, including advice', async () => {
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), fakeAdvisor(DEFAULT_ADVICE));
     const request = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'test-secret' },
@@ -114,19 +127,21 @@ describe('POST /api/workouts/ingest', () => {
     });
     const response = await handler({ request, env: makeEnv(db) } as any);
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { sport: string; training_load: number };
+    const body = (await response.json()) as { sport: string; training_load: number; advice: string };
     expect(body.sport).toBe('Hockey');
     expect(body.training_load).toBe(286);
+    expect(body.advice).toBe(DEFAULT_ADVICE);
 
     const row = await db
       .prepare('SELECT * FROM workouts WHERE started_at = ?')
       .bind('2026-08-17T20:03:14')
-      .first<{ training_load: number }>();
+      .first<{ training_load: number; advice: string }>();
     expect(row?.training_load).toBe(286);
+    expect(row?.advice).toBe(DEFAULT_ADVICE);
   });
 
   it('re-ingesting the same started_at upserts rather than duplicating', async () => {
-    const handler1 = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+    const handler1 = createIngestHandler(fakeExtractor(FULL_EXTRACTION), fakeAdvisor(DEFAULT_ADVICE));
     const request1 = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'test-secret' },
@@ -134,7 +149,10 @@ describe('POST /api/workouts/ingest', () => {
     });
     await handler1({ request: request1, env: makeEnv(db) } as any);
 
-    const handler2 = createIngestHandler(fakeExtractor({ ...FULL_EXTRACTION, training_load: 300 }));
+    const handler2 = createIngestHandler(
+      fakeExtractor({ ...FULL_EXTRACTION, training_load: 300 }),
+      fakeAdvisor(DEFAULT_ADVICE)
+    );
     const request2 = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'test-secret' },
@@ -150,7 +168,7 @@ describe('POST /api/workouts/ingest', () => {
   it('uploads the source image to R2 and stores the image_key', async () => {
     const r2 = createTestR2();
     const env: Env = { ...makeEnv(db), WORKOUT_IMAGES: r2 };
-    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), fakeAdvisor(DEFAULT_ADVICE));
     const request = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'test-secret' },
@@ -182,7 +200,7 @@ describe('POST /api/workouts/ingest', () => {
       },
     };
     const env: Env = { ...makeEnv(db), WORKOUT_IMAGES: throwingR2 };
-    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION));
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), fakeAdvisor(DEFAULT_ADVICE));
     const request = makeRequest('https://x/api/workouts/ingest', {
       method: 'POST',
       headers: { 'X-Ingest-Secret': 'test-secret' },
@@ -193,5 +211,59 @@ describe('POST /api/workouts/ingest', () => {
     const body = (await response.json()) as { image_key: string | null; training_load: number };
     expect(body.image_key).toBeNull();
     expect(body.training_load).toBe(286);
+  });
+
+  it('still ingests successfully with advice null when advice generation fails', async () => {
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), throwingAdvisor());
+    const request = makeRequest('https://x/api/workouts/ingest', {
+      method: 'POST',
+      headers: { 'X-Ingest-Secret': 'test-secret' },
+      body: new Uint8Array([1, 2, 3]),
+    });
+    const response = await handler({ request, env: makeEnv(db) } as any);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { advice: string | null; training_load: number };
+    expect(body.advice).toBeNull();
+    expect(body.training_load).toBe(286);
+
+    const row = await db
+      .prepare('SELECT * FROM workouts WHERE started_at = ?')
+      .bind('2026-08-17T20:03:14')
+      .first<{ advice: string | null }>();
+    expect(row?.advice).toBeNull();
+  });
+
+  it('gives the advisor context built from prior history (integration of Task 2 + Task 4)', async () => {
+    // Seed a prior workout so the advisor call receives non-empty recentWorkouts.
+    const seedHandler = createIngestHandler(
+      fakeExtractor({ ...FULL_EXTRACTION, started_at: '2026-08-10T18:00:00', training_load: 150 }),
+      fakeAdvisor(DEFAULT_ADVICE)
+    );
+    await seedHandler({
+      request: makeRequest('https://x/api/workouts/ingest', {
+        method: 'POST',
+        headers: { 'X-Ingest-Secret': 'test-secret' },
+        body: new Uint8Array([1, 2, 3]),
+      }),
+      env: makeEnv(db),
+    } as any);
+
+    let receivedRecentWorkoutsCount = -1;
+    const capturingAdvisor: AdviceGenerator = async (context) => {
+      receivedRecentWorkoutsCount = context.recentWorkouts.length;
+      return DEFAULT_ADVICE;
+    };
+
+    const handler = createIngestHandler(fakeExtractor(FULL_EXTRACTION), capturingAdvisor);
+    await handler({
+      request: makeRequest('https://x/api/workouts/ingest', {
+        method: 'POST',
+        headers: { 'X-Ingest-Secret': 'test-secret' },
+        body: new Uint8Array([1, 2, 3]),
+      }),
+      env: makeEnv(db),
+    } as any);
+
+    expect(receivedRecentWorkoutsCount).toBe(1);
   });
 });

@@ -4,8 +4,10 @@ import { callVisionExtraction, type VisionExtractor } from '../../_lib/vision';
 import { normalizeExtractedWorkout } from '../../_lib/workout-parse';
 import { upsertWorkout } from '../../_lib/workouts-db';
 import { imageKeyForStartedAt } from '../../_lib/image-store';
+import { buildAdviceContext } from '../../_lib/advice-context';
+import { generateAdvice, type AdviceGenerator } from '../../_lib/advice';
 
-export function createIngestHandler(extract: VisionExtractor): PagesFunction<Env> {
+export function createIngestHandler(extract: VisionExtractor, advise: AdviceGenerator): PagesFunction<Env> {
   return async (context) => {
     const { request, env } = context;
 
@@ -43,6 +45,15 @@ export function createIngestHandler(extract: VisionExtractor): PagesFunction<Env
       row.image_key = null;
     }
 
+    // Advice generation is also best-effort: a failure (context build or
+    // the AI call itself) should not fail the whole ingest.
+    try {
+      const adviceContext = await buildAdviceContext(env.DB, row);
+      row.advice = await advise(adviceContext, env);
+    } catch {
+      row.advice = null;
+    }
+
     await upsertWorkout(env.DB, row);
     return new Response(JSON.stringify(row), {
       status: 200,
@@ -51,4 +62,4 @@ export function createIngestHandler(extract: VisionExtractor): PagesFunction<Env
   };
 }
 
-export const onRequestPost: PagesFunction<Env> = createIngestHandler(callVisionExtraction);
+export const onRequestPost: PagesFunction<Env> = createIngestHandler(callVisionExtraction, generateAdvice);
