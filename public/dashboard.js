@@ -32,6 +32,12 @@ function formatWorkoutDuration(sec) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 function renderWorkouts(workouts) {
   const container = document.getElementById('workouts-list');
   if (workouts.length === 0) {
@@ -55,7 +61,7 @@ function renderWorkouts(workouts) {
       const adviceId = `workout-advice-${index}`;
       const adviceToggle = w.advice
         ? `<button class="advice-toggle" data-target="${adviceId}">View advice</button>
-           <div class="advice-text" id="${adviceId}" hidden>${w.advice}</div>`
+           <div class="advice-text" id="${adviceId}" hidden>${escapeHtml(w.advice)}</div>`
         : '';
       return `
         <div class="workout-item">
@@ -84,6 +90,7 @@ function renderWorkouts(workouts) {
   container.querySelectorAll('.advice-toggle').forEach((button) => {
     button.addEventListener('click', () => {
       const target = document.getElementById(button.dataset.target);
+      if (!target) return;
       const isHidden = target.hidden;
       target.hidden = !isHidden;
       button.textContent = isHidden ? 'Hide advice' : 'View advice';
