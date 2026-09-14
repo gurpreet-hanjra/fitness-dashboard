@@ -23,7 +23,7 @@ const UPSERT_SQL = `
     vitality_score = excluded.vitality_score,
     source_device = excluded.source_device,
     image_key = excluded.image_key,
-    advice = excluded.advice,
+    advice = COALESCE(excluded.advice, workouts.advice),
     created_at = excluded.created_at
 `;
 

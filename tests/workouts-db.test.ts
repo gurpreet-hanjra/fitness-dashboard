@@ -67,14 +67,25 @@ describe('workouts upsert/query', () => {
     expect(rows[0].image_key).toBeNull();
   });
 
-  it('stores and updates advice, including clearing it back to null on re-upsert', async () => {
+  it('stores advice and replaces it with new advice text on re-upsert', async () => {
     await upsertWorkout(db, row({ advice: 'Great session -- prioritize hydration and protein tonight.' }));
     let rows = await queryWorkoutsRange(db, '2026-08-01', '2026-08-31');
     expect(rows[0].advice).toBe('Great session -- prioritize hydration and protein tonight.');
 
+    await upsertWorkout(db, row({ advice: 'Updated advice -- focus on recovery this week.' }));
+    rows = await queryWorkoutsRange(db, '2026-08-01', '2026-08-31');
+    expect(rows[0].advice).toBe('Updated advice -- focus on recovery this week.');
+  });
+
+  it('preserves existing advice when a re-upsert provides null (failed regeneration)', async () => {
+    await upsertWorkout(db, row({ advice: 'Great session -- prioritize hydration and protein tonight.' }));
+    let rows = await queryWorkoutsRange(db, '2026-08-01', '2026-08-31');
+    expect(rows[0].advice).toBe('Great session -- prioritize hydration and protein tonight.');
+
+    // Simulate a re-ingest whose advice generation failed (advice: null).
     await upsertWorkout(db, row({ advice: null }));
     rows = await queryWorkoutsRange(db, '2026-08-01', '2026-08-31');
-    expect(rows[0].advice).toBeNull();
+    expect(rows[0].advice).toBe('Great session -- prioritize hydration and protein tonight.');
   });
 
   it('filters by the date portion of started_at', async () => {
