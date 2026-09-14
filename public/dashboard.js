@@ -49,13 +49,13 @@ function renderWorkouts(workouts) {
       const date = new Date(w.started_at).toLocaleDateString();
       const load =
         w.training_load !== null
-          ? `${w.training_load}${w.training_load_label ? ` (${w.training_load_label})` : ''}`
+          ? `${w.training_load}${w.training_load_label ? ` (${escapeHtml(w.training_load_label)})` : ''}`
           : '--';
       const recovery = w.recovery_hours !== null ? `${w.recovery_hours}h` : '--';
       const imageUrl = `/api/workouts/image?started_at=${encodeURIComponent(w.started_at)}`;
       const thumb = w.image_key
         ? `<a href="${imageUrl}" target="_blank" rel="noopener">
-             <img class="workout-thumb" src="${imageUrl}" alt="${w.sport} workout card" />
+             <img class="workout-thumb" src="${imageUrl}" alt="${escapeHtml(w.sport)} workout card" />
            </a>`
         : '';
       const adviceId = `workout-advice-${index}`;
@@ -69,7 +69,7 @@ function renderWorkouts(workouts) {
             ${thumb}
             <div class="workout-content">
               <div class="workout-header">
-                <strong>${w.sport}</strong>
+                <strong>${escapeHtml(w.sport)}</strong>
                 <span class="muted">${date}</span>
               </div>
               <div class="workout-stats">
