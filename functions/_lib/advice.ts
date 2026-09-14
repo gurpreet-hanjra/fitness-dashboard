@@ -63,7 +63,7 @@ Write about 150-300 words of practical advice covering:
 2. Suggestions for the next training session (intensity, timing, what to focus on).
 3. General sports-nutrition guidance appropriate to this training load (not personalized to specific meals, since we don't track food intake -- general guidance like hydration, protein/carb timing is fine).
 
-Write directly to the athlete in a supportive, practical coaching tone. Do not use markdown formatting, just plain prose in paragraphs.`;
+Write directly to the athlete in a supportive, practical coaching tone. Do not use markdown formatting, just plain prose in paragraphs. Do not open with a greeting or a placeholder name (e.g. do not write "Hey [Athlete]") -- start directly with the advice itself.`;
 }
 
 export type AdviceGenerator = (context: AdviceContext, env: Env) => Promise<string>;
