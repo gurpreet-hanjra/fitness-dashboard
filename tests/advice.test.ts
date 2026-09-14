@@ -56,13 +56,16 @@ describe('buildPrompt', () => {
   it('includes recent daily metrics data', () => {
     const context: AdviceContext = {
       workout: workoutRow(),
-      recentMetrics: [dailyMetricsRow({ date: '2026-08-16', steps: 9500, weight_kg: 83.1 })],
+      recentMetrics: [
+        dailyMetricsRow({ date: '2026-08-16', steps: 9500, weight_kg: 83.1, resting_hr: 55 }),
+      ],
       recentWorkouts: [],
     };
     const prompt = buildPrompt(context);
     expect(prompt).toContain('2026-08-16');
     expect(prompt).toContain('9500');
     expect(prompt).toContain('83.1');
+    expect(prompt).toContain('55');
   });
 
   it('includes prior workouts data', () => {
@@ -82,5 +85,11 @@ describe('buildPrompt', () => {
     const prompt = buildPrompt(context);
     expect(prompt).toContain('No recent daily metrics recorded.');
     expect(prompt).toContain('No other workouts in the past 14 days.');
+  });
+
+  it('instructs the model not to use a placeholder greeting', () => {
+    const context: AdviceContext = { workout: workoutRow(), recentMetrics: [], recentWorkouts: [] };
+    const prompt = buildPrompt(context);
+    expect(prompt).toContain('Hey [Athlete]');
   });
 });

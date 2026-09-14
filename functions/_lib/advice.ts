@@ -27,6 +27,9 @@ function formatRecentMetrics(rows: DailyMetricsRow[]): string {
       if (r.sleep_duration_min !== null) bits.push(`${(r.sleep_duration_min / 60).toFixed(1)}h sleep`);
       if (r.weight_kg !== null) bits.push(`${r.weight_kg}kg`);
       if (r.avg_hr !== null) bits.push(`avg HR ${r.avg_hr}`);
+      if (r.resting_hr !== null) bits.push(`resting HR ${r.resting_hr}`);
+      if (r.exercise_minutes !== null) bits.push(`${r.exercise_minutes}min exercise`);
+      if (r.active_calories !== null) bits.push(`${r.active_calories} active kcal`);
       return bits.join(', ');
     })
     .join('\n');
