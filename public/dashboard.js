@@ -137,7 +137,7 @@ async function loadDashboard() {
 
   const latestWeightRow = [...rows].reverse().find((r) => r.weight_kg !== null);
   if (latestWeightRow) {
-    document.getElementById('weight-current').textContent = `${latestWeightRow.weight_kg} kg`;
+    document.getElementById('weight-current').textContent = `${latestWeightRow.weight_kg.toFixed(1)} kg`;
   }
 
   if (rows.length > 0) {
