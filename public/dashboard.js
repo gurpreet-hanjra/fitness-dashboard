@@ -121,17 +121,17 @@ async function loadDashboard() {
   }
 
   const labels = rows.map((r) => r.date);
-  lineChart('weight-chart', labels, rows.map((r) => r.weight_kg), 'Weight (kg)', '#4f46e5');
-  lineChart('steps-chart', labels, rows.map((r) => r.steps), 'Steps', '#16a34a');
-  lineChart('hr-chart', labels, rows.map((r) => r.avg_hr), 'Avg HR', '#dc2626');
+  lineChart('weight-chart', labels, rows.map((r) => r.weight_kg), 'Weight (kg)', '#206bc4');
+  lineChart('steps-chart', labels, rows.map((r) => r.steps), 'Steps', '#2fb344');
+  lineChart('hr-chart', labels, rows.map((r) => r.avg_hr), 'Avg HR', '#d63939');
   lineChart(
     'sleep-chart',
     labels,
     rows.map((r) => (r.sleep_duration_min !== null ? r.sleep_duration_min / 60 : null)),
     'Sleep (hrs)',
-    '#0891b2'
+    '#17a2b8'
   );
-  lineChart('body-fat-chart', labels, rows.map((r) => r.body_fat_pct), 'Body Fat %', '#d97706');
+  lineChart('body-fat-chart', labels, rows.map((r) => r.body_fat_pct), 'Body Fat %', '#f76707');
 
   renderWorkouts(workouts);
 
