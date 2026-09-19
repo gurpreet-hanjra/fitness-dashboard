@@ -1,8 +1,7 @@
 {
   "name": "fitness-dashboard",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A personal fitness dashboard on Cloudflare Pages: HealthKit trends plus AI-analyzed hockey workouts, with automatic coaching advice generated via Workers AI.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,9 +9,9 @@
     "dev": "wrangler pages dev public",
     "deploy": "wrangler pages deploy public --branch=main"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["cloudflare-pages", "cloudflare-workers", "d1", "healthkit", "fitness-dashboard", "workers-ai"],
+  "author": "Gurpreet Singh Hanjra",
+  "license": "MIT",
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260911.1",
     "@types/better-sqlite3": "^9.6.0",
