@@ -7,6 +7,11 @@ function formatDate(d) {
   return `${year}-${month}-${day}`;
 }
 
+function formatDisplayDate(isoLike) {
+  const [year, month, day] = String(isoLike).slice(0, 10).split('-');
+  return `${day}.${month}.${year}`;
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Request failed: ${url}`);
@@ -46,7 +51,7 @@ function renderWorkouts(workouts) {
   }
   container.innerHTML = workouts
     .map((w, index) => {
-      const date = new Date(w.started_at).toLocaleDateString();
+      const date = formatDisplayDate(w.started_at);
       const load =
         w.training_load !== null
           ? `${w.training_load}${w.training_load_label ? ` (${escapeHtml(w.training_load_label)})` : ''}`
@@ -120,7 +125,7 @@ async function loadDashboard() {
     return;
   }
 
-  const labels = rows.map((r) => r.date);
+  const labels = rows.map((r) => formatDisplayDate(r.date));
   lineChart('weight-chart', labels, rows.map((r) => r.weight_kg), 'Weight (kg)', '#206bc4');
   lineChart('steps-chart', labels, rows.map((r) => r.steps), 'Steps', '#2fb344');
   lineChart('hr-chart', labels, rows.map((r) => r.avg_hr), 'Avg HR', '#d63939');
@@ -146,13 +151,13 @@ async function loadDashboard() {
       rows[0].updated_at
     );
     document.getElementById('last-updated').textContent =
-      `Last updated: ${new Date(latestUpdatedAt).toLocaleString()}`;
+      `Last updated: ${formatDisplayDate(latestUpdatedAt)}, ${new Date(latestUpdatedAt).toLocaleTimeString()}`;
   }
 
   if (goal) {
     const goalEl = document.getElementById('weight-goal');
     if (latestWeightRow) {
-      const delta = (latestWeightRow.weight_kg - goal.target).toFixed(1);
+      const delta = (goal.target - latestWeightRow.weight_kg).toFixed(1);
       const sign = Number(delta) > 0 ? '+' : '';
       goalEl.textContent = `Goal: ${goal.target} kg (${sign}${delta} kg to go)`;
     } else {
