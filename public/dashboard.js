@@ -154,9 +154,10 @@ function renderWorkouts(workouts) {
       const date = formatDisplayDate(w.started_at);
       const imageUrl = `/api/workouts/image?started_at=${encodeURIComponent(w.started_at)}`;
       const thumb = w.image_key
-        ? `<a href="${imageUrl}" target="_blank" rel="noopener">
+        ? `<button type="button" class="workout-thumb-wrap" data-image-url="${imageUrl}" data-image-alt="${escapeHtml(w.sport)} workout card" aria-label="View full ${escapeHtml(w.sport)} workout card image">
              <img class="workout-thumb" src="${imageUrl}" alt="${escapeHtml(w.sport)} workout card" />
-           </a>`
+             <i class="ti ti-zoom-in workout-thumb-zoom"></i>
+           </button>`
         : '';
       const adviceId = `workout-advice-${index}`;
       const adviceToggle = w.advice
@@ -191,6 +192,42 @@ function renderWorkouts(workouts) {
       target.hidden = !isHidden;
       button.textContent = isHidden ? 'Hide advice' : 'View advice';
     });
+  });
+
+  container.querySelectorAll('.workout-thumb-wrap').forEach((button) => {
+    button.addEventListener('click', () => {
+      openImageLightbox(button.dataset.imageUrl, button.dataset.imageAlt);
+    });
+  });
+}
+
+function openImageLightbox(imageUrl, altText) {
+  const lightbox = document.getElementById('image-lightbox');
+  const img = document.getElementById('lightbox-img');
+  if (!lightbox || !img) return;
+  img.src = imageUrl;
+  img.alt = altText || '';
+  lightbox.hidden = false;
+}
+
+function closeImageLightbox() {
+  const lightbox = document.getElementById('image-lightbox');
+  const img = document.getElementById('lightbox-img');
+  if (!lightbox) return;
+  lightbox.hidden = true;
+  if (img) img.src = '';
+}
+
+function initImageLightbox() {
+  const lightbox = document.getElementById('image-lightbox');
+  if (!lightbox) return;
+  lightbox.addEventListener('click', (event) => {
+    if (event.target === lightbox || event.target.closest('.lightbox-close')) {
+      closeImageLightbox();
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !lightbox.hidden) closeImageLightbox();
   });
 }
 
@@ -257,4 +294,5 @@ async function loadDashboard() {
   }
 }
 
+initImageLightbox();
 loadDashboard();
