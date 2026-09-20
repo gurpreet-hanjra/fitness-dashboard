@@ -1,5 +1,7 @@
 # Fitness Dashboard
 
+[![Live Demo](https://img.shields.io/website?url=https%3A%2F%2Ffitness-dashboard-6ih.pages.dev&up_message=live&down_message=down&label=demo)](https://fitness-dashboard-6ih.pages.dev)
+
 A personal fitness dashboard that turns Apple Health and hockey workout
 data into trend charts and AI-generated coaching advice — running
 entirely on Cloudflare's edge (Pages Functions, D1, R2, Workers AI).
