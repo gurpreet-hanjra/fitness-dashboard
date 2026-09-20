@@ -43,6 +43,57 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function loadBadgeColor(label) {
+  const l = (label || '').toLowerCase();
+  if (l.includes('very high')) return 'red';
+  if (l.includes('high')) return 'orange';
+  if (l.includes('very low')) return 'green';
+  if (l.includes('low')) return 'cyan';
+  if (l.includes('moderate') || l.includes('optimal')) return 'yellow';
+  return 'secondary';
+}
+
+function formatRecoveryStatus(startedAt, recoveryHours) {
+  const recoveryEndsAt = new Date(startedAt).getTime() + recoveryHours * 3600000;
+  const hoursLeft = Math.ceil((recoveryEndsAt - Date.now()) / 3600000);
+  if (hoursLeft <= 0) return { text: 'Recovered', color: 'green' };
+  const color = hoursLeft > recoveryHours / 2 ? 'red' : 'orange';
+  return { text: `${hoursLeft}h recovery left`, color };
+}
+
+function buildStatBadges(w) {
+  const badges = [];
+  if (w.duration_sec !== null) {
+    badges.push(
+      `<span class="badge bg-blue-lt"><i class="ti ti-clock"></i> ${formatWorkoutDuration(w.duration_sec)}</span>`
+    );
+  }
+  if (w.active_kcal !== null) {
+    badges.push(`<span class="badge bg-orange-lt"><i class="ti ti-flame"></i> ${w.active_kcal} kcal</span>`);
+  }
+  if (w.avg_hr !== null) {
+    const hrText = w.max_hr !== null ? `${w.avg_hr}/${w.max_hr} bpm` : `${w.avg_hr} bpm avg`;
+    badges.push(`<span class="badge bg-red-lt"><i class="ti ti-heartbeat"></i> ${hrText}</span>`);
+  }
+  if (w.training_load !== null) {
+    const color = loadBadgeColor(w.training_load_label);
+    const labelText = w.training_load_label ? ` &middot; ${escapeHtml(w.training_load_label)}` : '';
+    badges.push(
+      `<span class="badge bg-${color}-lt"><i class="ti ti-bolt"></i> Load ${w.training_load}${labelText}</span>`
+    );
+  }
+  if (w.recovery_hours !== null) {
+    const status = formatRecoveryStatus(w.started_at, w.recovery_hours);
+    badges.push(`<span class="badge bg-${status.color}-lt"><i class="ti ti-moon"></i> ${status.text}</span>`);
+  }
+  if (w.vitality_score !== null) {
+    badges.push(
+      `<span class="badge bg-cyan-lt"><i class="ti ti-trending-up"></i> Vitality ${w.vitality_score}</span>`
+    );
+  }
+  return badges.join(' ');
+}
+
 function renderWorkouts(workouts) {
   const container = document.getElementById('workouts-list');
   if (workouts.length === 0) {
@@ -52,11 +103,6 @@ function renderWorkouts(workouts) {
   container.innerHTML = workouts
     .map((w, index) => {
       const date = formatDisplayDate(w.started_at);
-      const load =
-        w.training_load !== null
-          ? `${w.training_load}${w.training_load_label ? ` (${escapeHtml(w.training_load_label)})` : ''}`
-          : '--';
-      const recovery = w.recovery_hours !== null ? `${w.recovery_hours}h` : '--';
       const imageUrl = `/api/workouts/image?started_at=${encodeURIComponent(w.started_at)}`;
       const thumb = w.image_key
         ? `<a href="${imageUrl}" target="_blank" rel="noopener">
@@ -78,11 +124,7 @@ function renderWorkouts(workouts) {
                 <span class="muted">${date}</span>
               </div>
               <div class="workout-stats">
-                <span>${formatWorkoutDuration(w.duration_sec)}</span>
-                <span>${w.active_kcal ?? '--'} kcal</span>
-                <span>HR ${w.avg_hr ?? '--'}/${w.max_hr ?? '--'}</span>
-                <span>Load: ${load}</span>
-                <span>Recovery: ${recovery}</span>
+                ${buildStatBadges(w)}
               </div>
               ${adviceToggle}
             </div>

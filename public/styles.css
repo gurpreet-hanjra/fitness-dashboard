@@ -30,9 +30,8 @@
 .workout-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 0.9rem;
-  color: var(--tblr-text-secondary, #6b7280);
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
 .workout-row {
