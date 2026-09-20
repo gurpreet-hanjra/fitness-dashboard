@@ -49,8 +49,15 @@ function formatRecentWorkouts(rows: WorkoutRow[]): string {
     .join('\n');
 }
 
+function formatPreviousWorkoutComparison(previousWorkout: WorkoutRow | null): string {
+  if (!previousWorkout) {
+    return 'There is no previous workout on record -- this is the first tracked workout. Say so explicitly instead of comparing.';
+  }
+  return `Previous workout for comparison:\n${formatWorkoutSummary(previousWorkout)}`;
+}
+
 export function buildPrompt(context: AdviceContext): string {
-  return `You are a sports science coach analyzing a hockey player's workout data. Give concise, practical advice based on the data below.
+  return `You are a sports science coach analyzing a field hockey player's workout data. Give deep, practical, structured feedback based on the data below.
 
 Today's workout:
 ${formatWorkoutSummary(context.workout)}
@@ -61,12 +68,25 @@ ${formatRecentMetrics(context.recentMetrics)}
 Other workouts from the last 14 days:
 ${formatRecentWorkouts(context.recentWorkouts)}
 
-Write about 150-300 words of practical advice covering:
-1. Recovery guidance based on this workout's training load and recovery time, and any accumulated fatigue visible in the recent history.
-2. Suggestions for the next training session (intensity, timing, what to focus on).
-3. General sports-nutrition guidance appropriate to this training load (not personalized to specific meals, since we don't track food intake -- general guidance like hydration, protein/carb timing is fine).
+${formatPreviousWorkoutComparison(context.previousWorkout)}
 
-Write directly to the athlete in a supportive, practical coaching tone. Do not use markdown formatting, just plain prose in paragraphs. Do not open with a greeting or a placeholder name (e.g. do not write "Hey [Athlete]") -- start directly with the advice itself.`;
+Structure your response as markdown with exactly these section headers, in this order:
+
+## Analysis
+2-3 sentences analyzing this workout's key numbers (load, HR, recovery, vitality) and what they indicate about the athlete's current state.
+
+## Comparison to Previous Workout
+Compare this workout to the previous one listed above: what improved, what got worse, and what stayed on track, referencing specific numbers. If there is no previous workout, say this is the first tracked workout instead.
+
+## Action Items
+
+### Recovery
+2-3 bullet points (using "- ") of concrete recovery actions for the coming days -- stretching, light activity, sleep, timing before the next high-intensity session -- based on this workout's training load and recovery time, and any accumulated fatigue visible in the recent history.
+
+### Nutrition This Week
+3-4 bullet points (using "- ") of general sports-nutrition guidance for the week ahead, appropriate to this training load: hydration, protein/carb timing, training-day vs rest-day calorie needs. Keep this general -- not specific meals or recipes, since we don't track food intake.
+
+Write directly to the athlete in a supportive, practical coaching tone. Do not open with a greeting or a placeholder name (e.g. do not write "Hey [Athlete]") -- start directly with the Analysis section.`;
 }
 
 export type AdviceGenerator = (context: AdviceContext, env: Env) => Promise<string>;
@@ -74,7 +94,7 @@ export type AdviceGenerator = (context: AdviceContext, env: Env) => Promise<stri
 export const generateAdvice: AdviceGenerator = async (context, env) => {
   const output = await env.AI.run(MODEL, {
     messages: [{ role: 'user', content: buildPrompt(context) }],
-    max_tokens: 700,
+    max_tokens: 1000,
   });
 
   const text = output.response;

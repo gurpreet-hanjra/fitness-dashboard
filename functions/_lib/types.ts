@@ -102,4 +102,5 @@ export interface AdviceContext {
   workout: WorkoutRow;
   recentMetrics: DailyMetricsRow[];
   recentWorkouts: WorkoutRow[];
+  previousWorkout: WorkoutRow | null;
 }

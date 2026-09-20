@@ -61,37 +61,86 @@ function formatRecoveryStatus(startedAt, recoveryHours) {
   return { text: `${hoursLeft}h recovery left`, color };
 }
 
+const STAT_TOOLTIPS = {
+  duration: 'Total time of the workout',
+  calories: 'Active calories burned during the workout',
+  hr: 'Average / max heart rate during the workout, in beats per minute',
+  load: 'Training load: a composite score of workout intensity and duration — higher means more strain on your body',
+  recovery: 'Recommended recovery time before your next high-intensity session',
+  vitality: 'Vitality score: reflects your overall fitness and readiness trend based on recent training and recovery',
+};
+
 function buildStatBadges(w) {
   const badges = [];
   if (w.duration_sec !== null) {
     badges.push(
-      `<span class="badge bg-blue-lt"><i class="ti ti-clock"></i> ${formatWorkoutDuration(w.duration_sec)}</span>`
+      `<span class="badge bg-blue-lt" title="${STAT_TOOLTIPS.duration}"><i class="ti ti-clock"></i> ${formatWorkoutDuration(w.duration_sec)}</span>`
     );
   }
   if (w.active_kcal !== null) {
-    badges.push(`<span class="badge bg-orange-lt"><i class="ti ti-flame"></i> ${w.active_kcal} kcal</span>`);
+    badges.push(
+      `<span class="badge bg-orange-lt" title="${STAT_TOOLTIPS.calories}"><i class="ti ti-flame"></i> ${w.active_kcal} kcal</span>`
+    );
   }
   if (w.avg_hr !== null) {
     const hrText = w.max_hr !== null ? `${w.avg_hr}/${w.max_hr} bpm` : `${w.avg_hr} bpm avg`;
-    badges.push(`<span class="badge bg-red-lt"><i class="ti ti-heartbeat"></i> ${hrText}</span>`);
+    badges.push(
+      `<span class="badge bg-red-lt" title="${STAT_TOOLTIPS.hr}"><i class="ti ti-heartbeat"></i> ${hrText}</span>`
+    );
   }
   if (w.training_load !== null) {
     const color = loadBadgeColor(w.training_load_label);
     const labelText = w.training_load_label ? ` &middot; ${escapeHtml(w.training_load_label)}` : '';
     badges.push(
-      `<span class="badge bg-${color}-lt"><i class="ti ti-bolt"></i> Load ${w.training_load}${labelText}</span>`
+      `<span class="badge bg-${color}-lt" title="${STAT_TOOLTIPS.load}"><i class="ti ti-bolt"></i> Load ${w.training_load}${labelText}</span>`
     );
   }
   if (w.recovery_hours !== null) {
     const status = formatRecoveryStatus(w.started_at, w.recovery_hours);
-    badges.push(`<span class="badge bg-${status.color}-lt"><i class="ti ti-moon"></i> ${status.text}</span>`);
+    badges.push(
+      `<span class="badge bg-${status.color}-lt" title="${STAT_TOOLTIPS.recovery}"><i class="ti ti-moon"></i> ${status.text}</span>`
+    );
   }
   if (w.vitality_score !== null) {
     badges.push(
-      `<span class="badge bg-cyan-lt"><i class="ti ti-trending-up"></i> Vitality ${w.vitality_score}</span>`
+      `<span class="badge bg-cyan-lt" title="${STAT_TOOLTIPS.vitality}"><i class="ti ti-trending-up"></i> Vitality ${w.vitality_score}</span>`
     );
   }
   return badges.join(' ');
+}
+
+function formatAdviceHtml(text) {
+  const escaped = escapeHtml(text);
+  const inline = (line) => line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  const html = [];
+  let listItems = [];
+  const flushList = () => {
+    if (listItems.length > 0) {
+      html.push(`<ul>${listItems.map((item) => `<li>${item}</li>`).join('')}</ul>`);
+      listItems = [];
+    }
+  };
+
+  for (const rawLine of escaped.split('\n')) {
+    const line = rawLine.trim();
+    if (line === '') {
+      flushList();
+    } else if (line.startsWith('### ')) {
+      flushList();
+      html.push(`<h5>${inline(line.slice(4))}</h5>`);
+    } else if (line.startsWith('## ')) {
+      flushList();
+      html.push(`<h4>${inline(line.slice(3))}</h4>`);
+    } else if (line.startsWith('- ')) {
+      listItems.push(inline(line.slice(2)));
+    } else {
+      flushList();
+      html.push(`<p>${inline(line)}</p>`);
+    }
+  }
+  flushList();
+  return html.join('');
 }
 
 function renderWorkouts(workouts) {
@@ -112,7 +161,7 @@ function renderWorkouts(workouts) {
       const adviceId = `workout-advice-${index}`;
       const adviceToggle = w.advice
         ? `<button class="advice-toggle" data-target="${adviceId}">View advice</button>
-           <div class="advice-text" id="${adviceId}" hidden>${escapeHtml(w.advice)}</div>`
+           <div class="advice-text" id="${adviceId}" hidden>${formatAdviceHtml(w.advice)}</div>`
         : '';
       return `
         <div class="workout-item">

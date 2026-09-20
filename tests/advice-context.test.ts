@@ -94,4 +94,20 @@ describe('buildAdviceContext', () => {
     const context = await buildAdviceContext(db, workout);
     expect(context.workout).toEqual(workout);
   });
+
+  it('sets previousWorkout to the most recent prior workout in the window', async () => {
+    await upsertWorkout(db, workoutRow({ started_at: '2026-08-10T18:00:00', training_load: 200 }));
+    await upsertWorkout(db, workoutRow({ started_at: '2026-08-14T18:00:00', training_load: 150 }));
+
+    const workout = workoutRow({ started_at: '2026-08-17T20:03:14', training_load: 286 });
+    await upsertWorkout(db, workout);
+    const context = await buildAdviceContext(db, workout);
+
+    expect(context.previousWorkout?.started_at).toBe('2026-08-14T18:00:00');
+  });
+
+  it('sets previousWorkout to null when there is no prior workout in the window', async () => {
+    const context = await buildAdviceContext(db, workoutRow());
+    expect(context.previousWorkout).toBeNull();
+  });
 });

@@ -33,7 +33,23 @@ INSERT INTO workouts (
     datetime('now', '-2 day', '20:30'), 'Hockey', 4380, 620, 780, 152, 189,
     4.2, 2.8, 245, 'Very high',
     72, 68, 'Apple Watch', NULL,
-    'Given the very high training load from this session, prioritize recovery over the next 72 hours. Light walking or gentle mobility work is fine, but hold off on another high-intensity session until your body has caught up. Stay on top of hydration and protein intake to support muscle repair.',
+    '## Analysis
+Today''s session carried a very high training load (245) with strong HR intensity (152/189 bpm). A vitality score of 68 suggests you''re managing the accumulated fatigue reasonably well so far.
+
+## Comparison to Previous Workout
+Compared to your last session (load 190, ''High''), this one was noticeably harder. Recovery time increased from 48h to 72h, and your average HR climbed from 145 to 152 -- a sign of increased intensity, not necessarily a bad thing on its own.
+
+## Action Items
+
+### Recovery
+- Prioritize 8+ hours of sleep tonight and tomorrow
+- Light mobility work or a short walk is fine on day 2 -- nothing high-intensity
+- Hold off on another very-high-load session until the 72h window closes
+
+### Nutrition This Week
+- Rehydrate aggressively today: aim for 3-4L water plus electrolytes
+- Get protein in within 2 hours post-session to support muscle repair
+- On lighter training days this week, scale back carb intake slightly versus today',
     datetime('now', '-2 day')
   ),
   (

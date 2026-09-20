@@ -17,5 +17,11 @@ export async function buildAdviceContext(db: D1Like, workout: WorkoutRow): Promi
 
   const recentWorkouts = workoutsInWindow.filter((w) => w.started_at !== workout.started_at);
 
-  return { workout, recentMetrics, recentWorkouts };
+  const previousWorkout = recentWorkouts.reduce<WorkoutRow | null>((latest, w) => {
+    if (w.started_at >= workout.started_at) return latest;
+    if (!latest || w.started_at > latest.started_at) return w;
+    return latest;
+  }, null);
+
+  return { workout, recentMetrics, recentWorkouts, previousWorkout };
 }
