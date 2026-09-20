@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fitness Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.5.1/dist/css/tabler.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.46.0/dist/tabler-icons.min.css" />
   <link rel="stylesheet" href="/styles.css" />
@@ -16,7 +18,10 @@
         <div class="container-xl">
           <div class="row g-2 align-items-center">
             <div class="col">
-              <h2 class="page-title">Fitness Dashboard</h2>
+              <h2 class="page-title d-flex align-items-center">
+                <img src="/favicon.svg" alt="" width="32" height="32" class="me-2" />
+                Fitness Dashboard
+              </h2>
               <p id="last-updated" class="text-secondary mb-0"></p>
             </div>
             <div class="col-auto ms-auto">
@@ -41,7 +46,7 @@
               <div id="weight-section" class="card">
                 <div class="card-body">
                   <div class="d-flex align-items-baseline mb-3">
-                    <div class="subheader">Weight</div>
+                    <div class="subheader"><i class="ti ti-scale text-primary me-1"></i> Weight</div>
                   </div>
                   <div class="d-flex align-items-baseline">
                     <span id="weight-current" class="h1 mb-0 me-2">--</span>
@@ -57,7 +62,7 @@
             <div class="col-12">
               <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Workouts</h3>
+                  <h3 class="card-title"><i class="ti ti-activity text-primary me-1"></i> Workouts</h3>
                 </div>
                 <div class="card-body">
                   <div id="workouts-list"></div>
@@ -68,7 +73,7 @@
             <div class="col-md-6">
               <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Steps</h3>
+                  <h3 class="card-title"><i class="ti ti-walk text-primary me-1"></i> Steps</h3>
                 </div>
                 <div class="card-body">
                   <canvas id="steps-chart" height="120"></canvas>
@@ -79,7 +84,7 @@
             <div class="col-md-6">
               <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Heart Rate</h3>
+                  <h3 class="card-title"><i class="ti ti-heartbeat text-primary me-1"></i> Heart Rate</h3>
                 </div>
                 <div class="card-body">
                   <canvas id="hr-chart" height="120"></canvas>
@@ -90,7 +95,7 @@
             <div class="col-md-6">
               <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Sleep</h3>
+                  <h3 class="card-title"><i class="ti ti-moon text-primary me-1"></i> Sleep</h3>
                 </div>
                 <div class="card-body">
                   <canvas id="sleep-chart" height="120"></canvas>
@@ -101,7 +106,7 @@
             <div class="col-md-6">
               <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Body Fat %</h3>
+                  <h3 class="card-title"><i class="ti ti-percentage text-primary me-1"></i> Body Fat %</h3>
                 </div>
                 <div class="card-body">
                   <canvas id="body-fat-chart" height="120"></canvas>
